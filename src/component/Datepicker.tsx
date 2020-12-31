@@ -15,6 +15,9 @@ import {
 import PropTypes from "prop-types";
 
 import "./DatePicker.css";
+// import getYear from 'date-fns/getYear'
+
+import { getYear, getMonth, getTime } from "date-fns";
 
 interface Props {
   onChange: (val: number) => void;
@@ -25,10 +28,12 @@ interface dateData {
   month: number;
   date: number;
 }
-type ActionType = {
-  type: "selectedDay" | "year" | "month" | "monthDetails";
-  value: number | any;
-};
+
+type ActionType =
+  | { type: "selectedDay"; value: number }
+  | { type: "year"; value: number }
+  | { type: "month"; value: number }
+  | { type: "monthDetails"; value: dayDetailsReturnType[] };
 
 interface TSinitialState {
   todayTimestamp: number;
@@ -43,52 +48,48 @@ interface TSinitialState {
 const date: Date = new Date();
 const oneDay: number = 60 * 60 * 24 * 1000;
 const todayTimestamp: number =
-  date.getTime() -
-  (date.getTime() % oneDay) +
+  getTime(date) -
+  (getTime(date) % oneDay) +
   date.getTimezoneOffset() * 1000 * 60;
 
-const initialState: TSinitialState = {
+const initialState = {
   todayTimestamp: todayTimestamp, // or todayTimestamp, for short
-  year: date.getFullYear(),
-  minDate: date.getFullYear(),
-  maxDate: date.getFullYear(),
-  month: date.getMonth(),
+  year: getYear(date),
+  minDate: getYear(date),
+  maxDate: getYear(date),
+  month: getMonth(date),
   selectedDay: todayTimestamp,
-  monthDetails: getMonthDetails(date.getFullYear(), date.getMonth()),
+  monthDetails: getMonthDetails(getYear(date), getMonth(date)),
 };
 
 // Function component
 export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
   const el = useRef<HTMLDivElement>(null);
   const inputRef = createRef() as React.MutableRefObject<HTMLInputElement>;
-  // const inputRef = useRef<HTMLInputElement | null>(null);
-  const [state, dispatch] = useReducer<
-    React.Reducer<TSinitialState, ActionType>
-  >(reducer, initialState);
-  // const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
   /** Maybe you could add this to initialState 🤷🏽‍♂️ */
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const addBackDrop = (e: any) => {
+  const addBackDrop = (e: any): void => {
+    e.preventDefault();
     if (showDatePicker && el && !el.current?.contains(e.target)) {
       setShowDatePicker(false);
     }
   };
 
-  const setDateToInput = (timestamp: number): void => {
-    const dateString = getDateStringFromTimestamp(timestamp);
-    inputRef.current.value = dateString;
-  };
-
   useEffect(() => {
-    window.addEventListener("click", addBackDrop);
+    document.addEventListener("click", addBackDrop);
     setDateToInput(state.selectedDay);
 
     // returned function will be called on component unmount
     return () => {
-      window.removeEventListener("click", addBackDrop);
+      document.removeEventListener("click", addBackDrop);
     };
   }, [showDatePicker]);
+
+  const setDateToInput = (timestamp: number): void => {
+    const dateString = getDateStringFromTimestamp(timestamp);
+    inputRef.current.value = dateString;
+  };
 
   const isCurrentDay = (day: dayDetailsReturnType): boolean =>
     day.timestamp === todayTimestamp;
@@ -124,7 +125,6 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
       month = 0;
       year++;
     }
-
     dispatch({ type: "year", value: year });
     dispatch({ type: "month", value: month });
     dispatch({ type: "monthDetails", value: getMonthDetails(year, month) });
@@ -252,7 +252,9 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
               </div>
             </div>
           </div>
-          <div className="mdpc-body">{calendarMarkup}</div>
+          <div className="mdpc-body" onClick={() => setShowDatePicker(false)}>
+            {calendarMarkup}
+          </div>
         </div>
       ) : (
         ""
@@ -260,15 +262,18 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
     </div>
   );
 };
-const reducer: React.Reducer<TSinitialState, ActionType> = (
-  state,
-  action
-): any => {
-  if (state.hasOwnProperty(action.type)) {
-    return {
-      ...state,
-      [`${action.type}`]: action.value,
-    };
+const reducer = (state: TSinitialState, action: ActionType) => {
+  switch (action.type) {
+    case "selectedDay":
+      return { ...state, [`${action.type}`]: action.value };
+    case "year":
+      return { ...state, [`${action.type}`]: action.value };
+    case "month":
+      return { ...state, [`${action.type}`]: action.value };
+    case "monthDetails":
+      return { ...state, [`${action.type}`]: action.value };
+    default:
+      return state;
   }
 
   console.log(`Unknown key in state: ${action.type}`);

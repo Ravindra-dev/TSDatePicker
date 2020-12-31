@@ -1,3 +1,4 @@
+import { getDay, getMonth, getDate, getYear, getTime } from "date-fns";
 export interface dayDetails {
   index: number;
   numberOfDays: number;
@@ -51,7 +52,7 @@ export const getDayDetails = (args: dayDetails): dayDetailsReturnType => {
   let _date =
     (date < 0 ? prevMonthNumberOfDays + date : date % args.numberOfDays) + 1;
   let month = date < 0 ? -1 : date >= args.numberOfDays ? 1 : 0;
-  let timestamp = new Date(args.year, args.month, _date).getTime();
+  let timestamp = getTime(new Date(args.year, args.month, _date));
   return {
     date: _date,
     day,
@@ -63,22 +64,25 @@ export const getDayDetails = (args: dayDetails): dayDetailsReturnType => {
 
 export const getDateStringFromTimestamp = (timestamp: number): string => {
   let dateObject = new Date(timestamp);
-  let month = dateObject.getMonth() + 1;
-  let date = dateObject.getDate();
+  let month = getMonth(dateObject) + 1;
+  let date = getDate(dateObject);
   return (
-    dateObject.getFullYear() +
+    getYear(dateObject) +
     "-" +
     (month < 10 ? "0" + month : month) +
     "-" +
     (date < 10 ? "0" + date : date)
   );
 };
+export interface month_Details {
+  getMonth_Details: (year: number, month: number) => dayDetailsReturnType[];
+}
 
-export const getMonthDetails = (
+export const getMonthDetails: month_Details["getMonth_Details"] = (
   year: number,
   month: number
 ): dayDetailsReturnType[] => {
-  let firstDay = new Date(year, month).getDay();
+  let firstDay = getDay(new Date(year, month));
   let numberOfDays = getNumberOfDays(year, month);
   let monthArray = [];
   let rows = 6;
@@ -103,5 +107,5 @@ export const getMonthDetails = (
 };
 
 export const getNumberOfDays = (year: number, month: number): number => {
-  return 40 - new Date(year, month, 40).getDate();
+  return 40 - getDate(new Date(year, month, 40));
 };

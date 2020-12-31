@@ -10,6 +10,7 @@ function App() {
   return (
     <>
       <DatePicker onChange={onChange} />
+      {/* <DatePicker /> */}
     </>
   );
 }
