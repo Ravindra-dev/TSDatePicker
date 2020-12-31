@@ -262,7 +262,7 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
     </div>
   );
 };
-const reducer = (state: TSinitialState, action: ActionType) => {
+const reducer = (state: TSinitialState, action: ActionType): TSinitialState => {
   switch (action.type) {
     case "selectedDay":
       return { ...state, [`${action.type}`]: action.value };
