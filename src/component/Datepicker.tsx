@@ -69,22 +69,23 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   /** Maybe you could add this to initialState 🤷🏽‍♂️ */
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const addBackDrop = (e: any): void => {
+
+  const addBackDrop: { (event: MouseEvent): void } = (e: MouseEvent): void => {
     e.preventDefault();
-    if (showDatePicker && el && !el.current?.contains(e.target)) {
+    if (showDatePicker && el && !el.current?.contains(e.target as Node)) {
       setShowDatePicker(false);
     }
   };
 
   useEffect(() => {
-    document.addEventListener("click", addBackDrop);
+    document.addEventListener<"click">("click", addBackDrop);
     setDateToInput(state.selectedDay);
 
     // returned function will be called on component unmount
     return () => {
-      document.removeEventListener("click", addBackDrop);
+      document.removeEventListener<"click">("click", addBackDrop);
     };
-  }, [showDatePicker]);
+  }, [addBackDrop]);
 
   const setDateToInput = (timestamp: number): void => {
     const dateString = getDateStringFromTimestamp(timestamp);
@@ -275,8 +276,6 @@ const reducer = (state: TSinitialState, action: ActionType): TSinitialState => {
     default:
       return state;
   }
-
-  console.log(`Unknown key in state: ${action.type}`);
 };
 
 DatePicker.propTypes = {
