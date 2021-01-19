@@ -1,20 +1,11 @@
+import React, { createRef } from "react";
 import { getDay, getMonth, getDate, getYear, getTime } from "date-fns";
-export interface dayDetails {
-  index: number;
-  numberOfDays: number;
-  firstDay: number;
-  year: number;
-  month: number;
-}
+import { dayDetails, dayDetailsReturnType, month_Details } from "../Types";
 
-export interface dayDetailsReturnType {
-  date: number;
-  day: number;
-  month: number;
-  timestamp: number;
-  dayString: string;
-}
+// DatePicker Component stuff
+export const inputRef = createRef() as React.MutableRefObject<HTMLInputElement>;
 
+// Date component stuff
 export const daysMap: string[] = [
   "Sunday",
   "Monday",
@@ -74,9 +65,6 @@ export const getDateStringFromTimestamp = (timestamp: number): string => {
     (date < 10 ? "0" + date : date)
   );
 };
-export interface month_Details {
-  getMonth_Details: (year: number, month: number) => dayDetailsReturnType[];
-}
 
 export const getMonthDetails: month_Details["getMonth_Details"] = (
   year: number,

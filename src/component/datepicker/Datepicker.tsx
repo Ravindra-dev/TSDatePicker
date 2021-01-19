@@ -5,45 +5,26 @@ import React, {
   useRef,
   createRef,
   useReducer,
+  useCallback,
 } from "react";
+import { getYear, getMonth, getTime } from "date-fns";
+import PropTypes from "prop-types";
+
 import {
   getDateStringFromTimestamp,
   getMonthDetails,
   monthMap,
-  dayDetailsReturnType,
-} from "./Date";
-import PropTypes from "prop-types";
+  // to datepicker
+} from "../date/Date";
 
 import "./DatePicker.css";
-// import getYear from 'date-fns/getYear'
-
-import { getYear, getMonth, getTime } from "date-fns";
-
-interface Props {
-  onChange: (val: number) => void;
-}
-
-interface dateData {
-  year: number;
-  month: number;
-  date: number;
-}
-
-type ActionType =
-  | { type: "selectedDay"; value: number }
-  | { type: "year"; value: number }
-  | { type: "month"; value: number }
-  | { type: "monthDetails"; value: dayDetailsReturnType[] };
-
-interface TSinitialState {
-  todayTimestamp: number;
-  year: number;
-  minDate: number;
-  maxDate: number;
-  month: number;
-  selectedDay: number;
-  monthDetails: dayDetailsReturnType[];
-}
+import {
+  dayDetailsReturnType,
+  Props,
+  dateData,
+  ActionType,
+  TSinitialState,
+} from "../Types";
 
 const date: Date = new Date();
 const oneDay: number = 60 * 60 * 24 * 1000;
@@ -52,7 +33,7 @@ const todayTimestamp: number =
   (getTime(date) % oneDay) +
   date.getTimezoneOffset() * 1000 * 60;
 
-const initialState = {
+const initialState: TSinitialState = {
   todayTimestamp: todayTimestamp, // or todayTimestamp, for short
   year: getYear(date),
   minDate: getYear(date),
@@ -70,12 +51,23 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
   /** Maybe you could add this to initialState 🤷🏽‍♂️ */
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const addBackDrop: { (event: MouseEvent): void } = (e: MouseEvent): void => {
-    e.preventDefault();
-    if (showDatePicker && el && !el.current?.contains(e.target as Node)) {
-      setShowDatePicker(false);
-    }
-  };
+  const addBackDrop: { (event: MouseEvent): void } = useCallback(
+    (e: MouseEvent): void => {
+      e.preventDefault();
+      if (showDatePicker && el && !el.current?.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    },
+    [showDatePicker]
+  );
+
+  const setDateToInput = useCallback(
+    (timestamp: number): void => {
+      const dateString = getDateStringFromTimestamp(timestamp);
+      inputRef.current.value = dateString;
+    },
+    [inputRef]
+  );
 
   useEffect(() => {
     document.addEventListener<"click">("click", addBackDrop);
@@ -85,12 +77,7 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
     return () => {
       document.removeEventListener<"click">("click", addBackDrop);
     };
-  }, [addBackDrop]);
-
-  const setDateToInput = (timestamp: number): void => {
-    const dateString = getDateStringFromTimestamp(timestamp);
-    inputRef.current.value = dateString;
-  };
+  }, [addBackDrop, state.selectedDay, setDateToInput]);
 
   const isCurrentDay = (day: dayDetailsReturnType): boolean =>
     day.timestamp === todayTimestamp;
@@ -219,16 +206,28 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
     return options;
   };
 
+  const showDP = () => setShowDatePicker(true);
+
   return (
     <div ref={el} className="MyDatePicker">
-      <div className="mdp-input" onClick={() => setShowDatePicker(true)}>
-        <input type="date" ref={inputRef} onChange={updateDateFromInput} />
+      <div className="mdp-input" data-testid="showDatepicker">
+        <input
+          type="date"
+          data-testid="showDatepickerInput"
+          ref={inputRef}
+          onChange={updateDateFromInput}
+          onClick={showDP}
+        />
       </div>
       {showDatePicker ? (
-        <div className="mdp-container">
+        <div data-testid="container" className="mdp-container">
           <div className="mdpc-head">
             <div className="mdpch-button">
-              <div className="mdpchb-inner" onClick={() => setMonth(-1)}>
+              <div
+                className="mdpchb-inner"
+                data-testid="prevMonth"
+                onClick={() => setMonth(-1)}
+              >
                 <span className="mdpchbi-left-arrow"></span>
               </div>
             </div>
@@ -253,7 +252,11 @@ export const DatePicker: React.FunctionComponent<Props> = ({ onChange }) => {
               </div>
             </div>
           </div>
-          <div className="mdpc-body" onClick={() => setShowDatePicker(false)}>
+          <div
+            className="mdpc-body"
+            data-testid="calendar"
+            onClick={() => setShowDatePicker(false)}
+          >
             {calendarMarkup}
           </div>
         </div>
